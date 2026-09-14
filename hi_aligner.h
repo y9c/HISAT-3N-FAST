@@ -2923,6 +2923,11 @@ index_t GenomeHit<index_t>::alignWithALTs_recur(
             }
             for(; alt_range.first >= 0; alt_range.first--) {
                 const ALT<index_t>& alt = alts[alt_range.first];
+                // Non-reversed deletions store pos as their left edge but are
+                // continue'd below as non-matches. Types that can match use
+                // pos as their reach coordinate, so once alt.pos + rdlen <
+                // joinedOff every lower-pos alt is left of the read window.
+                if(alt.pos + rdlen < joinedOff) break;
                 if(alt.snp()) {
                     if(alt.deletion() && !alt.reversed) continue;
                     if(alt.pos + rdlen < joinedOff) break;
@@ -2983,6 +2988,13 @@ index_t GenomeHit<index_t>::alignWithALTs_recur(
         for(; alt_range.second > alt_range.first; alt_range.second--) {
             ALT<index_t> alt = alts[alt_range.second];
             if(alt.pos >= joinedOff) continue;
+            // alts are sorted ascending by pos; we iterate downward, so once an
+            // alt's reach coordinate is entirely left of the read window, every
+            // lower-index alt is too. For matched-capable types (SNP_SGL,
+            // reversed deletion, right-reaching splicesite) pos is the reach
+            // coordinate; non-reversed deletions and left<right splicesites are
+            // continue'd below as non-matches, so breaking on them is harmless.
+            if(alt.pos + rdlen < joinedOff) break;
             if(alt.splicesite()) {
                 if(alt.left < alt.right) continue;
                 index_t tmp = alt.left;
