@@ -371,7 +371,7 @@ static void resetOptions() {
 	useSpinlock				= true;  // false -> don't use of spinlocks even if they're #defines
 	fileParallel			= false; // separate threads read separate input files in parallel
 	useShmem				= false; // use shared memory to hold the index
-	useMm					= false; // use memory-mapped files to hold the index
+	useMm					= true;  // use memory-mapped files to hold the index (MAP_SHARED: faster load, index pages shared across processes)
 	mmSweep					= false; // sweep through memory-mapped files immediately after mapping
 	gMinInsert				= 0;     // minimum insert size
 	gMaxInsert				= 1000;   // maximum insert size

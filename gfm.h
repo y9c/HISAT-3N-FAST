@@ -5879,6 +5879,8 @@ void GFM<index_t>::readIntoMemory(
                 if(mmFile[i] == (void *)(-1)) {
                     perror("mmap");
                     cerr << "Error: Could not memory-map the index file " << names[i] << endl;
+                    cerr << "The mmap-backed index (default --mm) requires the index filesystem to support mmap. "
+                         << "Use --shmem to fall back to heap loading if this filesystem does not." << endl;
                     throw 1;
                 }
                 if(mmSweep) {
