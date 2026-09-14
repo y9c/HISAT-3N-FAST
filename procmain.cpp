@@ -280,14 +280,19 @@ int proc_align(int argc, const char **argv) {
 		// in heap. On a big genome index this removes a large per-worker
 		// memory multiplication for free, with no change to alignment output.
 		args.push_back("--mm");
-		// Split the requested thread budget evenly across workers so the total
-		// thread count matches a single-process run (per-worker ~= threads/nproc),
-		// keeping the parallel path an apples-to-apples comparison.
 		args.push_back("-U"); args.push_back(chunks[k]);
-		int per_worker = threads / nproc;
-		int rem = threads % nproc;
-		if(per_worker < 1) per_worker = 1;
-		args.push_back("-p"); args.push_back(to_string(per_worker + (k < rem ? 1 : 0)));
+		// Give every worker the full -p budget instead of splitting it as
+		// threads/nproc. Splitting starves each worker below hisat's ~8-thread
+		// internal- parallelism sweet spot, which made --proc-parallel slower
+		// than single-process (measured: 8 workers x 2 threads = 58.7s vs
+		// single -p64 = 11.5s on a 256-core node). With the full budget each
+		// worker runs -p independently, so N workers x -p T = N*T threads.
+		if(threads < 4) {
+			cerr << "Warning: --proc-parallel with -p " << threads
+			     << " < 4 is below hisat's per-process thread sweet spot; "
+			     << "each worker will run slowly. Use -p >= 8." << endl;
+		}
+		args.push_back("-p"); args.push_back(to_string(threads));
 		args.push_back("-S"); args.push_back(sam_files[k]);
 		const char **a = (const char**)malloc(sizeof(char*) * (args.size() + 1));
 		for(size_t j = 0; j < args.size(); j++) a[j] = args[j].c_str();
