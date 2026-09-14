@@ -38,6 +38,7 @@ enum {
 	ARG_FILEPAR,                // --filepar
 	ARG_SHMEM,                  // --shmem
 	ARG_MM,                     // --mm
+	ARG_NO_MM,                  // --no-mm (disable default mmap-backed index)
 	ARG_MMSWEEP,                // --mmsweep
 	ARG_FF,                     // --ff
 	ARG_FR,                     // --fr

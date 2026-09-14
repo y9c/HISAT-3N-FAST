@@ -638,6 +638,7 @@ static struct option long_options[] = {
 	{(char*)"phred64",      no_argument,       0,            ARG_PHRED64},
 	{(char*)"solexa1.3-quals", no_argument,    0,            ARG_PHRED64},
 	{(char*)"mm",           no_argument,       0,            ARG_MM},
+	{(char*)"no-mm",        no_argument,       0,            ARG_NO_MM},
 	{(char*)"shmem",        no_argument,       0,            ARG_SHMEM},
 	{(char*)"mmsweep",      no_argument,       0,            ARG_MMSWEEP},
 	{(char*)"hadoopout",    no_argument,       0,            ARG_HADOOPOUT},
@@ -1229,6 +1230,7 @@ static void parseOption(int next_option, const char *arg) {
 			throw 1;
 #endif
 		}
+		case ARG_NO_MM: useMm = false; break;
 		case ARG_MMSWEEP: mmSweep = true; break;
 		case ARG_HADOOPOUT: hadoopOut = true; break;
 		case ARG_SOLEXA_QUALS: solexaQuals = true; break;
