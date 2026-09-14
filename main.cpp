@@ -18,6 +18,7 @@
 #include <fstream>
 #include <string.h>
 #include <stdlib.h>
+#include <vector>
 #include "tokenize.h"
 #include "ds.h"
 #include "mem_ids.h"
@@ -28,6 +29,8 @@ extern "C" {
 	int hisat2(int argc, const char **argv);
 	int hisat2_build(int argc, const char **argv);
 }
+
+int proc_align(int argc, const char **argv);
 
 enum struct Route { ALIGN, BUILD, UNKNOWN };
 
@@ -94,8 +97,46 @@ static void print_usage(const char *prog) {
 	     << "  build   build a 3N index from a reference (was hisat-3n-build)" << endl;
 }
 
+static bool has_proc_parallel(int argc, char **argv, int *n) {
+	for(int i = 1; i < argc; i++) {
+		if(strncmp(argv[i], "--proc-parallel=", 16) == 0) {
+			*n = atoi(argv[i] + 16); return true;
+		}
+		if(strcmp(argv[i], "--proc-parallel") == 0 && i + 1 < argc) {
+			*n = atoi(argv[i + 1]); return true;
+		}
+	}
+	return false;
+}
+
+// Strip --proc-parallel[=]N from argv when it cannot be honored (N <= 1 or
+// otherwise non-positive), so the default single-process path tolerates it
+// being present but harmless.
+static int strip_proc_parallel(int argc, const char **argv) {
+	vector<const char*> kept;
+	kept.push_back(argv[0]);
+	for(int i = 1; i < argc; i++) {
+		if(strncmp(argv[i], "--proc-parallel=", 16) == 0) continue;
+		if(strcmp(argv[i], "--proc-parallel") == 0) { i++; continue; }
+		kept.push_back(argv[i]);
+	}
+	for(size_t i = 0; i < kept.size(); i++) {
+		const_cast<char**>(argv)[i] = const_cast<char*>(kept[i]);
+	}
+	return (int)kept.size();
+}
+
 int main(int argc, char **argv) {
 	Route route = detect_route(argc, argv);
+	if(route == Route::ALIGN) {
+		int nproc = 0;
+		if(has_proc_parallel(argc, argv, &nproc) && nproc > 1) {
+			return proc_align(argc, (const char**)argv);
+		}
+		if(has_proc_parallel(argc, argv, &nproc)) {
+			argc = strip_proc_parallel(argc, (const char**)argv);
+		}
+	}
 	if(route == Route::UNKNOWN) {
 		// No subcommand, no known argv[0]: if argv[1] starts with '-' it is a
 		// bare align invocation (e.g. "hisat3n -x idx -U r.fq"), so default to

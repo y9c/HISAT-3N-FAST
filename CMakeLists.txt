@@ -76,6 +76,7 @@ set(ALIGN_CPPS
     sse_util.cpp
     unique.cpp
     hisat2.cpp
+    procmain.cpp
 )
 
 # Build route only
